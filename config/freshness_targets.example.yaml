@@ -1,0 +1,27 @@
+# Freshness-audit targets.
+#
+# Each entry declares one BigQuery table along with how often it's
+# expected to be updated. The daily freshness audit reads each table's
+# last_modified_time from INFORMATION_SCHEMA and flags rows past 2x
+# (high) or 5x (critical) the declared cadence.
+#
+# Tables not listed here are NOT audited. Explicit opt-in.
+#
+# Set `not_yet_built: true` for tables that don't exist yet — the
+# audit skips them with a log line.
+
+targets:
+  # Hourly-refresh weather ingest.
+  - dataset: raw
+    table: weather_hourly
+    expected_cadence_hours: 1.5      # 1h cadence + 30min slack
+    owner_team: data_owners
+    purpose: NOAA weather hourly ingest
+
+  # Daily customer-counts rollup.
+  - dataset: curated
+    table: customer_counts_daily
+    expected_cadence_hours: 26       # daily + 2h slack
+    owner_team: finance_owners
+    purpose: Daily active-customers rollup
+    not_yet_built: true               # lands after customer signup ships

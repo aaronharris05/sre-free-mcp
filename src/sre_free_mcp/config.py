@@ -23,6 +23,7 @@ import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from sre_free_mcp.core.anomaly.targets import AnomalyTargetsConfig
+from sre_free_mcp.core.freshness.targets import FreshnessTargetsConfig
 
 
 # ---------------------------------------------------------------------------
@@ -120,16 +121,19 @@ class RecipientsConfig(BaseModel):
 
 
 class Config(BaseModel):
-    """Parsed view of all four YAML files."""
+    """Parsed view of every YAML file."""
 
     install: InstallConfig
     retry_policies: RetryPoliciesConfig = Field(default_factory=RetryPoliciesConfig)
     recipients: RecipientsConfig = Field(default_factory=RecipientsConfig)
     anomaly_targets: AnomalyTargetsConfig = Field(default_factory=AnomalyTargetsConfig)
+    freshness_targets: FreshnessTargetsConfig = Field(
+        default_factory=FreshnessTargetsConfig
+    )
 
     @model_validator(mode="after")
-    def _anomaly_targets_route_to_known_teams(self) -> "Config":
-        """Every anomaly target's owner_team must exist in recipients.yaml.
+    def _targets_route_to_known_teams(self) -> "Config":
+        """Every audit target's owner_team must exist in recipients.yaml.
 
         A target routed to an undefined team would fall through to the
         fallback at email time — better to surface the typo at config-
@@ -144,6 +148,14 @@ class Config(BaseModel):
                 available = ", ".join(sorted(known_teams))
                 raise ValueError(
                     f"anomaly target {t.table!r}.{t.metric_column!r} routes to "
+                    f"owner_team {t.owner_team!r} but that group is not defined "
+                    f"in recipients.yaml; available groups: {available}"
+                )
+        for t in self.freshness_targets.targets:
+            if t.owner_team not in known_teams:
+                available = ", ".join(sorted(known_teams))
+                raise ValueError(
+                    f"freshness target {t.dataset!r}.{t.table!r} routes to "
                     f"owner_team {t.owner_team!r} but that group is not defined "
                     f"in recipients.yaml; available groups: {available}"
                 )
@@ -168,13 +180,15 @@ def load_config(config_dir: Path | str) -> Config:
     install_data = _load_yaml(install_path)
     retry_data = _load_yaml(config_dir / "retry_policies.yaml", default={})
     recipients_data = _load_yaml(config_dir / "recipients.yaml", default={})
-    targets_data = _load_yaml(config_dir / "anomaly_targets.yaml", default={})
+    anomaly_data = _load_yaml(config_dir / "anomaly_targets.yaml", default={})
+    freshness_data = _load_yaml(config_dir / "freshness_targets.yaml", default={})
 
     return Config(
         install=InstallConfig(**install_data),
         retry_policies=RetryPoliciesConfig(**retry_data),
         recipients=RecipientsConfig(**recipients_data),
-        anomaly_targets=AnomalyTargetsConfig(**targets_data),
+        anomaly_targets=AnomalyTargetsConfig(**anomaly_data),
+        freshness_targets=FreshnessTargetsConfig(**freshness_data),
     )
 
 
@@ -225,6 +239,7 @@ __all__ = [
     "AnomalyTargetsConfig",
     "Config",
     "EmailConfig",
+    "FreshnessTargetsConfig",
     "InstallConfig",
     "LLMConfig",
     "RecipientsConfig",
