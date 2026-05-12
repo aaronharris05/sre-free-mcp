@@ -47,7 +47,10 @@ open_gaps AS (
     MAX(generated_at) AS worst_finding_at
   FROM `${project}.${dataset}.gap_reports`
   WHERE resolved_at IS NULL
-    AND scope IN ('wiring', 'data', 'freshness', 'cost', 'cloud_monitoring')
+    -- Only per-workflow findings count toward pipeline_health. Other
+    -- scopes (data quality on tables, cost-by-service, etc.) have
+    -- their own views and don't fold into a workflow's traffic light.
+    AND scope = 'workflow'
   GROUP BY scope_id
 )
 SELECT
