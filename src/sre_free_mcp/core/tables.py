@@ -45,5 +45,21 @@ class GovernanceTables:
     def pipeline_health(self) -> str:
         return f"{self.dataset}.pipeline_health_v1"
 
+    @property
+    def incidents(self) -> str:
+        return f"{self.dataset}.incidents"
+
+    @property
+    def pii_findings(self) -> str:
+        return f"{self.dataset}.pii_findings"
+
+    @property
+    def cost_daily(self) -> str:
+        return f"{self.dataset}.cost_daily"
+
+    @property
+    def cloud_monitoring_alerts(self) -> str:
+        return f"{self.dataset}.cloud_monitoring_alerts"
+
 
 __all__ = ["GovernanceTables"]
