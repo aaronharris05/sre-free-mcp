@@ -16,6 +16,7 @@ useful error rather than producing wrong behavior at 04:00 UTC.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Any, Literal
 
@@ -175,16 +176,36 @@ def load_config(config_dir: Path | str) -> Config:
     if not config_dir.is_dir():
         raise FileNotFoundError(f"config_dir does not exist: {config_dir}")
 
+    # Fall back to install.example.yaml when install.yaml is missing.
+    # This lets the bundled container image boot without external
+    # configuration: env vars below override the example's placeholders.
     install_path = config_dir / "install.yaml"
     if not install_path.is_file():
-        raise FileNotFoundError(f"install.yaml not found in {config_dir}")
+        example_path = config_dir / "install.example.yaml"
+        if example_path.is_file():
+            install_path = example_path
+        else:
+            raise FileNotFoundError(
+                f"neither install.yaml nor install.example.yaml found in {config_dir}"
+            )
 
     install_data = _load_yaml(install_path)
-    retry_data = _load_yaml(config_dir / "retry_policies.yaml", default={})
-    recipients_data = _load_yaml(config_dir / "recipients.yaml", default={})
-    anomaly_data = _load_yaml(config_dir / "anomaly_targets.yaml", default={})
-    freshness_data = _load_yaml(config_dir / "freshness_targets.yaml", default={})
-    alert_data = _load_yaml(config_dir / "alert_policies.yaml", default={})
+
+    # Env-var overrides so a fresh container with bundled examples
+    # can run against the right project + region without editing
+    # install.yaml. Customers mounting a real install.yaml via Secret
+    # Manager don't need these — but setting them is harmless.
+    if os.environ.get("GCP_PROJECT"):
+        install_data["project_id"] = os.environ["GCP_PROJECT"]
+    if os.environ.get("GCP_REGION"):
+        install_data["region"] = os.environ["GCP_REGION"]
+    if os.environ.get("SRE_GOVERNANCE_DATASET"):
+        install_data["governance_dataset"] = os.environ["SRE_GOVERNANCE_DATASET"]
+    retry_data = _load_yaml_with_fallback(config_dir, "retry_policies", default={})
+    recipients_data = _load_yaml_with_fallback(config_dir, "recipients", default={})
+    anomaly_data = _load_yaml_with_fallback(config_dir, "anomaly_targets", default={})
+    freshness_data = _load_yaml_with_fallback(config_dir, "freshness_targets", default={})
+    alert_data = _load_yaml_with_fallback(config_dir, "alert_policies", default={})
 
     return Config(
         install=InstallConfig(**install_data),
@@ -224,6 +245,23 @@ def apply_retry_overrides(config: Config) -> int:
 # ---------------------------------------------------------------------------
 # Internals
 # ---------------------------------------------------------------------------
+
+
+def _load_yaml_with_fallback(
+    config_dir: Path, stem: str, *, default: Any = None
+) -> Any:
+    """Load ``{stem}.yaml`` if present, else ``{stem}.example.yaml``, else default.
+
+    Same fallback pattern as install.yaml: bundled example files act as
+    sensible defaults; a customer-provided ``{stem}.yaml`` overrides.
+    """
+    plain = config_dir / f"{stem}.yaml"
+    example = config_dir / f"{stem}.example.yaml"
+    if plain.is_file():
+        return _load_yaml(plain, default=default)
+    if example.is_file():
+        return _load_yaml(example, default=default)
+    return default if default is not None else {}
 
 
 def _load_yaml(path: Path, default: Any = None) -> Any:

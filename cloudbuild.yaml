@@ -1,0 +1,29 @@
+# Cloud Build entry point.
+#
+# Builds the sre-free-mcp container image from docker/Dockerfile and
+# pushes it to gcr.io/<project>/sre-free-mcp:latest. Submit with:
+#
+#   gcloud builds submit --project=<project>
+#
+# Cloud Build reads this file by default when present at the repo root.
+# When wired into a build trigger that has git context, add a
+# :$SHORT_SHA tag alongside :latest for traceability.
+
+steps:
+  - id: docker-build
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag=gcr.io/$PROJECT_ID/sre-free-mcp:latest
+      - --file=docker/Dockerfile
+      - .
+
+  - id: docker-push
+    name: gcr.io/cloud-builders/docker
+    args: [push, "gcr.io/$PROJECT_ID/sre-free-mcp:latest"]
+
+images:
+  - gcr.io/$PROJECT_ID/sre-free-mcp:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY

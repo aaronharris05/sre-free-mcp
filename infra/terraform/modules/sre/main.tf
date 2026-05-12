@@ -108,6 +108,11 @@ resource "google_cloud_run_v2_service" "mcp" {
   name     = var.service_name
   labels   = var.labels
 
+  # GCP provider 6.x defaults this to true; without it a `terraform
+  # destroy` (and replace cycles, which the provider sometimes plans
+  # when the image SHA changes) silently fails.
+  deletion_protection = false
+
   template {
     service_account = local.sa_email
 

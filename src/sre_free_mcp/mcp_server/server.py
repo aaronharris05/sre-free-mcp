@@ -300,10 +300,16 @@ def build_server() -> Any:
 
     Lazy-imports the ``mcp`` package so the rest of sre-free-mcp can
     be used without the MCP SDK installed.
+
+    Binds to ``0.0.0.0:$PORT`` (defaulting to 8080) so the SSE/HTTP
+    transport works inside a Cloud Run container. FastMCP's defaults
+    are ``127.0.0.1:8000`` which Cloud Run can't reach.
     """
     from mcp.server.fastmcp import FastMCP
 
-    mcp = FastMCP("sre-free-mcp")
+    host = os.environ.get("MCP_HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT", "8080"))
+    mcp = FastMCP("sre-free-mcp", host=host, port=port)
 
     @mcp.tool()
     def pipeline_health() -> dict[str, Any]:
