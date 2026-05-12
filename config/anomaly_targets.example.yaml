@@ -1,0 +1,49 @@
+# Anomaly-detection targets.
+#
+# Each entry tells the daily anomaly sweep to score one metric column
+# on one BigQuery table. The detector reads `lookback_days` of history,
+# fits an anomaly leaderboard (Isolation Forest / LOF / OCSVM / ECOD /
+# PCA) on the metric column, converts the per-row scores to z-equivalents,
+# and flags rows past `severity_red_z` (high) or `severity_yellow_z` (medium).
+#
+# Findings are written to `governance.gap_reports` and routed to
+# `owner_team` (must match a group in recipients.yaml) via email.
+#
+# Set `not_yet_built: true` for targets whose table doesn't exist yet —
+# the sweep skips them with a log line rather than crashing on
+# "table not found".
+
+targets:
+  # ─────────────────────────────────────────────────────────────────
+  # Data-quality targets (route to data_owners)
+  # ─────────────────────────────────────────────────────────────────
+  - table: example_dataset.weather_hourly
+    metric_column: temp_f
+    timestamp_column: obs_time_utc
+    lookback_days: 14
+    severity_red_z: 5.0
+    severity_yellow_z: 3.5
+    owner_team: data_owners
+    purpose: Weather temperature outlier (data quality)
+
+  # ─────────────────────────────────────────────────────────────────
+  # Business signals (route to trader_owners / finance_owners)
+  # ─────────────────────────────────────────────────────────────────
+  - table: example_dataset.system_load_hourly
+    metric_column: mw
+    timestamp_column: interval_end_utc
+    lookback_days: 30
+    severity_red_z: 6.0
+    severity_yellow_z: 4.0
+    owner_team: trader_owners
+    purpose: System load outlier (business signal)
+
+  - table: example_dataset.customer_counts_daily
+    metric_column: active_customers
+    timestamp_column: as_of_date
+    lookback_days: 60
+    severity_red_z: 5.0
+    severity_yellow_z: 3.0
+    owner_team: finance_owners
+    purpose: Customer-count drift (business signal)
+    not_yet_built: true   # table not provisioned yet; sweep will skip

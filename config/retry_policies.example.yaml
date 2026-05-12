@@ -1,0 +1,31 @@
+# Per-workflow retry overrides.
+#
+# Defaults if a workflow is not listed:
+#   max_attempts: 3
+#   backoff_seconds: [30, 300, 1800]   # 30s, 5m, 30m
+#   breaker_window_min: 60
+#   breaker_threshold: 5
+#   require_idempotent: true
+#
+# Override here for cost-sensitive jobs (LLM-heavy workflows, paid
+# third-party APIs with rate limits) where the defaults are too
+# aggressive.
+
+policies:
+  # Example: a quota-limited ingest job. Two attempts with a longer
+  # cool-down so the retry lands in a fresh quota window.
+  - workflow_name: example_quota_limited_ingest
+    max_attempts: 2
+    backoff_seconds: [60, 600]
+
+  # Example: an LLM-heavy workflow. Cap attempts and stretch the
+  # cool-down so a misclassified-transient doesn't burn budget.
+  - workflow_name: example_llm_heavy_workflow
+    max_attempts: 2
+    backoff_seconds: [120, 1800]
+
+  # Example: a workflow that already self-retries internally. Tell
+  # this orchestrator not to stack retries on top.
+  - workflow_name: example_self_retrying_workflow
+    max_attempts: 1
+    backoff_seconds: []

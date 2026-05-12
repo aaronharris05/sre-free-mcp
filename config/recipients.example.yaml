@@ -1,0 +1,22 @@
+# Email recipient groups. The anomaly bot routes findings to the
+# owner_team listed on each anomaly target; that owner_team is
+# looked up here to resolve the actual email list.
+#
+# Lists are ALWAYS lists (even with one address) so adding a second
+# recipient later is a YAML edit, not a code change.
+#
+# `governance_owners` is the fallback group — used when an anomaly
+# finding can't be routed to a more specific team.
+
+groups:
+  governance_owners:
+    - ops@example.com
+
+  data_owners:
+    - data-team@example.com
+
+  trader_owners:
+    - trader@example.com
+
+  finance_owners:
+    - finance@example.com

@@ -1,0 +1,35 @@
+# sre-free-mcp install settings.
+#
+# Copy this file to install.yaml and edit. install.yaml is gitignored
+# so your project IDs and SMTP creds don't get committed.
+
+# Your GCP project ID where sre-free-mcp is deployed.
+project_id: my-gcp-project
+
+# GCP region for Cloud Run service + job.
+region: us-central1
+
+# BigQuery dataset that holds sre-free-mcp's tables
+# (gap_reports, events, approval_queue, workflows, pipeline_health_v1).
+# Default is "governance"; rename only if you already have a dataset
+# by that name doing something else.
+governance_dataset: governance
+
+# SMTP settings for sending anomaly + retry notification emails.
+email:
+  from_address: sre-alerts@example.com
+  smtp_host: smtp.gmail.com
+  smtp_port: 587
+  smtp_username: sre-alerts@example.com
+  # Name of the Secret Manager secret holding the SMTP password
+  # (NOT the password itself). The Terraform module creates this
+  # secret; you populate the value once after `terraform apply`.
+  smtp_password_secret: sre-smtp-password
+
+# Optional: LLM provider for anomaly-email narrative ("here's what
+# I found and what it probably means"). Set provider=none to send
+# plain findings tables with no narrative.
+llm:
+  provider: gemini       # gemini | anthropic | openai | none
+  model: gemini-2.0-flash
+  api_key_secret: sre-llm-api-key
