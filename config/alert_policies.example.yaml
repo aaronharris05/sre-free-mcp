@@ -1,0 +1,49 @@
+# GCP Cloud Monitoring alert policies (declarative).
+#
+# The cloud_monitoring sync routine reads this file and reconciles
+# the customer's GCP project to it — creating new policies, updating
+# changed ones, leaving unchanged ones alone.
+#
+# Schema is a small subset of the Monitoring API surface. Use the
+# Monitoring console for anything more exotic (multi-condition,
+# log-based, MQL).
+
+policies:
+  # Example 1 — Cloud Run job failures.
+  - display_name: cloud-run-job-failed-executions
+    documentation: |
+      Any Cloud Run job that completes with a non-zero exit code on
+      its most recent execution. Owned by sre.
+    severity: high
+    enabled: true
+    owner_team: sre_owners
+
+    conditions:
+      - metric_type: run.googleapis.com/job/completed_execution_count
+        filter: 'resource.label.job_name != ""'
+        comparison: COMPARISON_GT
+        threshold_value: 0
+        duration_seconds: 60
+        aggregation_alignment_period_seconds: 60
+        aggregation_per_series_aligner: ALIGN_SUM
+
+    notification_groups: [sre_owners]
+
+  # Example 2 — BigQuery slot usage spike.
+  - display_name: bq-slot-usage-spike
+    documentation: |
+      BigQuery slot utilization above 90% for 10 minutes. Owned by
+      data.
+    severity: medium
+    enabled: true
+    owner_team: data_owners
+
+    conditions:
+      - metric_type: bigquery.googleapis.com/slots/allocated_for_project
+        comparison: COMPARISON_GT
+        threshold_value: 0.9
+        duration_seconds: 600
+        aggregation_alignment_period_seconds: 60
+        aggregation_per_series_aligner: ALIGN_MEAN
+
+    notification_groups: [data_owners]

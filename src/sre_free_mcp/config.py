@@ -23,6 +23,7 @@ import yaml
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 from sre_free_mcp.core.anomaly.targets import AnomalyTargetsConfig
+from sre_free_mcp.core.cloud_monitoring.policies import AlertPoliciesConfig
 from sre_free_mcp.core.freshness.targets import FreshnessTargetsConfig
 
 
@@ -130,6 +131,7 @@ class Config(BaseModel):
     freshness_targets: FreshnessTargetsConfig = Field(
         default_factory=FreshnessTargetsConfig
     )
+    alert_policies: AlertPoliciesConfig = Field(default_factory=AlertPoliciesConfig)
 
     @model_validator(mode="after")
     def _targets_route_to_known_teams(self) -> "Config":
@@ -182,6 +184,7 @@ def load_config(config_dir: Path | str) -> Config:
     recipients_data = _load_yaml(config_dir / "recipients.yaml", default={})
     anomaly_data = _load_yaml(config_dir / "anomaly_targets.yaml", default={})
     freshness_data = _load_yaml(config_dir / "freshness_targets.yaml", default={})
+    alert_data = _load_yaml(config_dir / "alert_policies.yaml", default={})
 
     return Config(
         install=InstallConfig(**install_data),
@@ -189,6 +192,7 @@ def load_config(config_dir: Path | str) -> Config:
         recipients=RecipientsConfig(**recipients_data),
         anomaly_targets=AnomalyTargetsConfig(**anomaly_data),
         freshness_targets=FreshnessTargetsConfig(**freshness_data),
+        alert_policies=AlertPoliciesConfig(**alert_data),
     )
 
 
@@ -236,6 +240,7 @@ def _load_yaml(path: Path, default: Any = None) -> Any:
 
 
 __all__ = [
+    "AlertPoliciesConfig",
     "AnomalyTargetsConfig",
     "Config",
     "EmailConfig",
