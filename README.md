@@ -1,5 +1,7 @@
 # sre-free-mcp
 
+<!-- mcp-name: io.github.aaronharris05/sre-free-mcp -->
+
 Self-hosted SRE platform for GCP, callable by any AI agent via [Model Context Protocol](https://modelcontextprotocol.io) server. Anomaly detection, retry orchestration with circuit breakers, cost + PII + IAM audits — Cloud Run + BigQuery, Terraform-deployed.
 
 Drop it into a GCP project and you get sixteen audit bots, a retry orchestrator with circuit breaker, an incident lifecycle, and an MCP surface any AI agent (Claude, Cursor, custom) can call — all running on Cloud Run, writing to BigQuery, configured by YAML.

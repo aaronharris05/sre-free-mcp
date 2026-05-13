@@ -1,0 +1,23 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.aaronharris05/sre-free-mcp",
+  "title": "sre-free-mcp",
+  "description": "Self-hosted SRE platform for GCP, callable by any AI agent via MCP server. Anomaly detection, retry orchestration with circuit breakers, cost + PII + IAM audits — Cloud Run + BigQuery, Terraform-deployed.",
+  "version": "0.1.0",
+  "websiteUrl": "https://github.com/aaronharris05/sre-free-mcp",
+  "repository": {
+    "url": "https://github.com/aaronharris05/sre-free-mcp",
+    "source": "github"
+  },
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "sre-free-mcp",
+      "version": "0.1.0",
+      "transport": {
+        "type": "sse",
+        "url": "https://YOUR-CLOUD-RUN-SERVICE-URL/sse"
+      }
+    }
+  ]
+}
