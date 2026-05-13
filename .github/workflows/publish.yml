@@ -1,0 +1,79 @@
+name: Publish to PyPI
+
+# Runs on a git tag push of the form vX.Y.Z. The workflow builds the
+# package, runs `twine check`, and publishes to PyPI using OpenID Connect
+# (trusted publishing). No API token stored in GitHub secrets — auth is
+# minted per-run from GitHub's OIDC provider.
+#
+# Setup (one-time, on PyPI):
+#   1. Create the project on PyPI (or wait for the first manual publish
+#      to claim the name).
+#   2. Go to https://pypi.org/manage/account/publishing/ and add a
+#      pending publisher with:
+#        - PyPI Project Name: sre-free-mcp
+#        - Owner: aaronharris05
+#        - Repository: sre-free-mcp
+#        - Workflow name: publish.yml
+#        - Environment: pypi
+#   3. (Optional) Configure the `pypi` environment in GitHub repo settings
+#      with a required reviewer to gate releases.
+#
+# To release:
+#   git tag v0.2.0
+#   git push origin v0.2.0
+# Then watch this workflow run on the Actions tab.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    name: Build distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build + twine
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+
+      - name: Build wheel + sdist
+        run: python -m build
+
+      - name: Validate with twine
+        run: python -m twine check dist/*
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    # Required permission to mint the OIDC token PyPI verifies against.
+    permissions:
+      id-token: write
+    environment:
+      name: pypi
+      url: https://pypi.org/project/sre-free-mcp/
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # No `password` field — uses OIDC trusted publisher.
