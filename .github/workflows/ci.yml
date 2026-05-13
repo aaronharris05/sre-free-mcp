@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  python:
+    name: Python (pytest + ruff)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install package + dev deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Lint with ruff
+        run: |
+          python -m ruff check src tests
+
+      - name: Run test suite
+        run: |
+          python -m pytest tests -q --tb=short
+
+  terraform:
+    name: Terraform (fmt + validate)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.6.6"
+
+      - name: Check formatting
+        run: terraform -chdir=infra/terraform/modules/sre fmt -check
+        continue-on-error: false
+
+      - name: Initialize minimal example
+        run: terraform -chdir=infra/terraform/examples/minimal init -backend=false
+
+      - name: Validate minimal example
+        run: terraform -chdir=infra/terraform/examples/minimal validate
