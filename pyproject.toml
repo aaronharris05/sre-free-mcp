@@ -5,12 +5,29 @@ build-backend = "hatchling.build"
 [project]
 name = "sre-free-mcp"
 version = "0.1.0"
-description = "Self-hosted site reliability engineering agents for GCP — anomaly detection, retry orchestration, and circuit breaking exposed as an MCP server."
+description = "Self-hosted SRE platform for GCP, callable by any AI agent via MCP server. Anomaly detection, retry orchestration with circuit breakers, cost + PII + IAM audits — Cloud Run + BigQuery, Terraform-deployed."
 readme = "README.md"
 license = { text = "Apache-2.0" }
 requires-python = ">=3.12"
 authors = [{ name = "Aaron Harris", email = "aaronharris05@gmail.com" }]
-keywords = ["mcp", "sre", "gcp", "bigquery", "anomaly-detection", "retry", "circuit-breaker"]
+keywords = [
+    "mcp",
+    "mcp-server",
+    "sre",
+    "gcp",
+    "google-cloud",
+    "cloud-run",
+    "bigquery",
+    "terraform",
+    "observability",
+    "monitoring",
+    "anomaly-detection",
+    "audit",
+    "circuit-breaker",
+    "retry",
+    "ai-agents",
+    "claude",
+]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
