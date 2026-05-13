@@ -147,6 +147,10 @@ resource "google_cloud_run_v2_service" "mcp" {
         value = var.region
       }
       env {
+        name  = "SRE_GOVERNANCE_DATASET"
+        value = var.governance_dataset
+      }
+      env {
         name  = "SRE_CONFIG_DIR"
         value = "/app/config"
       }
@@ -243,6 +247,10 @@ resource "google_cloud_run_v2_job" "runner" {
         env {
           name  = "GCP_REGION"
           value = var.region
+        }
+        env {
+          name  = "SRE_GOVERNANCE_DATASET"
+          value = var.governance_dataset
         }
         env {
           name  = "SRE_CONFIG_DIR"
