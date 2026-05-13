@@ -150,6 +150,17 @@ variable "service_invokers" {
   default     = []
 }
 
+variable "delete_dataset_contents_on_destroy" {
+  description = <<-EOT
+    When true, `terraform destroy` wipes the BigQuery governance
+    dataset's contents along with the dataset itself. Set to false on
+    production installs where you want the tear-down to fail loudly if
+    historical findings still live in the dataset.
+  EOT
+  type        = bool
+  default     = true
+}
+
 variable "labels" {
   description = "Labels applied to every resource the module creates."
   type        = map(string)

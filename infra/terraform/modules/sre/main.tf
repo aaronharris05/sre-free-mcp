@@ -37,6 +37,12 @@ resource "google_bigquery_dataset" "governance" {
   friendly_name = "sre-free-mcp governance"
   description   = "Tables backing sre-free-mcp: workflows, events, gap_reports, incidents, approval_queue, pii_findings, cost_daily, cloud_monitoring_alerts, plus the pipeline_health_v1 view."
   labels        = var.labels
+
+  # Without this, `terraform destroy` fails on "dataset still in use"
+  # because the tables (created by install_ddl) remain. Customers who
+  # want immutable retention should set this to false in their root
+  # module and accept that destroys need a manual cleanup step.
+  delete_contents_on_destroy = var.delete_dataset_contents_on_destroy
 }
 
 # ---------------------------------------------------------------------------
@@ -204,6 +210,11 @@ resource "google_cloud_run_v2_job" "runner" {
   location = var.region
   name     = var.job_name
   labels   = merge(var.labels, { component = "runner" })
+
+  # Same story as the service — GCP provider 6.x defaults this to true
+  # and every replace cycle (image SHA change, env-var change, etc.)
+  # breaks without the override.
+  deletion_protection = false
 
   template {
     template {
