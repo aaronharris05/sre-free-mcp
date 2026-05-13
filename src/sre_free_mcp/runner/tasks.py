@@ -212,6 +212,166 @@ def rca_tick(*, config: Config, bq_client: Any, now: datetime, **_: Any) -> dict
     return _to_dict(result)
 
 
+def dependency_audit(
+    *, config: Config, bq_client: Any, now: datetime, **_: Any
+) -> dict[str, Any]:
+    """Scan pyproject.toml / requirements.txt files for risky deps.
+
+    Sources come from the ``SRE_DEPENDENCY_SOURCES`` env var as a
+    comma-separated path list (relative to ``SRE_CONFIG_DIR``'s parent
+    or absolute). v1 — once we add a dependency_targets.yaml this
+    moves into the config layer.
+    """
+    import os
+
+    from sre_free_mcp.core.dependency import sweep
+
+    raw = os.environ.get("SRE_DEPENDENCY_SOURCES", "").strip()
+    sources = [s.strip() for s in raw.split(",") if s.strip()] if raw else []
+    result = sweep(
+        project=config.install.project_id,
+        bq_client=bq_client,
+        sources=sources,
+        tables=_tables(config),
+        now=now,
+    )
+    return _to_dict(result)
+
+
+def scm_audit(
+    *, config: Config, bq_client: Any, now: datetime, **_: Any
+) -> dict[str, Any]:
+    """SCM hygiene audit. Skipped if SRE_SCM_REPOS / SRE_SCM_TOKEN_SECRET unset.
+
+    Repos format: ``owner1/repo1/main,owner2/repo2/main`` in
+    ``SRE_SCM_REPOS``. Token comes from the Secret Manager secret named
+    by ``SRE_SCM_TOKEN_SECRET``.
+    """
+    import logging
+    import os
+
+    from sre_free_mcp.core.scm import GitHubClient, sweep
+    from sre_free_mcp.secrets import get_secret
+
+    logger = logging.getLogger(__name__)
+
+    raw_repos = os.environ.get("SRE_SCM_REPOS", "").strip()
+    token_secret = os.environ.get("SRE_SCM_TOKEN_SECRET", "").strip()
+    if not raw_repos or not token_secret:
+        logger.info("scm_audit: no SRE_SCM_REPOS or token configured; skipping")
+        return {"repos": 0, "findings": [], "skipped": True}
+
+    repos: list[tuple[str, str, str]] = []
+    for entry in raw_repos.split(","):
+        parts = [p.strip() for p in entry.split("/") if p.strip()]
+        if len(parts) >= 3:
+            repos.append((parts[0], parts[1], parts[2]))
+        elif len(parts) == 2:
+            repos.append((parts[0], parts[1], "main"))
+
+    token = get_secret(token_secret, project=config.install.project_id)
+    client = GitHubClient(token=token)
+    result = sweep(
+        project=config.install.project_id,
+        bq_client=bq_client,
+        github_client=client,
+        repos=repos,
+        tables=_tables(config),
+        now=now,
+    )
+    return _to_dict(result)
+
+
+def test_coverage_audit(
+    *, config: Config, bq_client: Any, now: datetime, **_: Any
+) -> dict[str, Any]:
+    """Test coverage audit. Sources from SRE_COVERAGE_REPORTS env var."""
+    import os
+
+    from sre_free_mcp.core.test_coverage import sweep
+
+    raw = os.environ.get("SRE_COVERAGE_REPORTS", "").strip()
+    reports = [s.strip() for s in raw.split(",") if s.strip()] if raw else []
+    result = sweep(
+        project=config.install.project_id,
+        bq_client=bq_client,
+        coverage_reports=reports,
+        tables=_tables(config),
+        now=now,
+    )
+    return _to_dict(result)
+
+
+def secret_iam_audit(
+    *, config: Config, bq_client: Any, now: datetime, **_: Any
+) -> dict[str, Any]:
+    """Secret Manager rotation + project IAM hygiene audit."""
+    from sre_free_mcp.core.secret_iam import sweep
+
+    result = sweep(
+        project=config.install.project_id,
+        bq_client=bq_client,
+        tables=_tables(config),
+        now=now,
+    )
+    return _to_dict(result)
+
+
+def security_audit(
+    *, config: Config, bq_client: Any, now: datetime, **_: Any
+) -> dict[str, Any]:
+    """Mirror Security Command Center findings into gap_reports.
+
+    Skipped if ``organization_id`` not set in install.yaml /
+    GCP_ORGANIZATION_ID env.
+    """
+    from sre_free_mcp.core.security import sweep
+
+    result = sweep(
+        project=config.install.project_id,
+        bq_client=bq_client,
+        organization_id=config.install.organization_id,
+        tables=_tables(config),
+        now=now,
+    )
+    return _to_dict(result)
+
+
+def pii_audit(
+    *, config: Config, bq_client: Any, now: datetime, **_: Any
+) -> dict[str, Any]:
+    """Cloud DLP inspection of configured PII targets."""
+    from sre_free_mcp.core.pii import sweep
+
+    result = sweep(
+        project=config.install.project_id,
+        bq_client=bq_client,
+        targets=list(config.pii_targets.targets),
+        tables=_tables(config),
+        now=now,
+    )
+    return _to_dict(result)
+
+
+def llm_safety_audit(
+    *, config: Config, bq_client: Any, now: datetime, **_: Any
+) -> dict[str, Any]:
+    """LLM drift + adversarial smoke testing. No-op when llm.provider='none'."""
+    from sre_free_mcp.core.llm_safety import sweep
+
+    llm: LLMProvider = default_provider(
+        config.install.llm, project=config.install.project_id
+    )
+    result = sweep(
+        project=config.install.project_id,
+        bq_client=bq_client,
+        llm=llm,
+        tables=_tables(config),
+        now=now,
+    )
+    return _to_dict(result)
+
+
 def rollup(*, config: Config, bq_client: Any, now: datetime, **_: Any) -> dict[str, Any]:
     from sre_free_mcp.core.rollup import sweep
 
@@ -255,6 +415,14 @@ TASKS: dict[str, TaskFn] = {
     "incidents_tick": incidents_tick,
     "rca_tick": rca_tick,
     "rollup": rollup,
+    # Slices 13–16 — repo / GCP-API / LLM audits.
+    "dependency_audit": dependency_audit,
+    "scm_audit": scm_audit,
+    "test_coverage_audit": test_coverage_audit,
+    "secret_iam_audit": secret_iam_audit,
+    "security_audit": security_audit,
+    "pii_audit": pii_audit,
+    "llm_safety_audit": llm_safety_audit,
 }
 
 

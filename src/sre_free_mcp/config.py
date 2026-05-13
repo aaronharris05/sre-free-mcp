@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field, field_validator, model_validator
 from sre_free_mcp.core.anomaly.targets import AnomalyTargetsConfig
 from sre_free_mcp.core.cloud_monitoring.policies import AlertPoliciesConfig
 from sre_free_mcp.core.freshness.targets import FreshnessTargetsConfig
+from sre_free_mcp.core.pii.targets import PiiTargetsConfig
 
 
 # ---------------------------------------------------------------------------
@@ -59,6 +60,10 @@ class InstallConfig(BaseModel):
     project_id: str
     region: str = "us-central1"
     governance_dataset: str = "governance"
+    # GCP organization the project belongs to. Required by the
+    # `security` audit (SCC findings live at org-level); leave empty
+    # to skip the SCC sweep cleanly.
+    organization_id: str = ""
     email: EmailConfig
     llm: LLMConfig = Field(default_factory=LLMConfig)
 
@@ -133,6 +138,7 @@ class Config(BaseModel):
         default_factory=FreshnessTargetsConfig
     )
     alert_policies: AlertPoliciesConfig = Field(default_factory=AlertPoliciesConfig)
+    pii_targets: PiiTargetsConfig = Field(default_factory=PiiTargetsConfig)
 
     @model_validator(mode="after")
     def _targets_route_to_known_teams(self) -> "Config":
@@ -201,11 +207,14 @@ def load_config(config_dir: Path | str) -> Config:
         install_data["region"] = os.environ["GCP_REGION"]
     if os.environ.get("SRE_GOVERNANCE_DATASET"):
         install_data["governance_dataset"] = os.environ["SRE_GOVERNANCE_DATASET"]
+    if os.environ.get("GCP_ORGANIZATION_ID"):
+        install_data["organization_id"] = os.environ["GCP_ORGANIZATION_ID"]
     retry_data = _load_yaml_with_fallback(config_dir, "retry_policies", default={})
     recipients_data = _load_yaml_with_fallback(config_dir, "recipients", default={})
     anomaly_data = _load_yaml_with_fallback(config_dir, "anomaly_targets", default={})
     freshness_data = _load_yaml_with_fallback(config_dir, "freshness_targets", default={})
     alert_data = _load_yaml_with_fallback(config_dir, "alert_policies", default={})
+    pii_data = _load_yaml_with_fallback(config_dir, "pii_targets", default={})
 
     return Config(
         install=InstallConfig(**install_data),
@@ -214,6 +223,7 @@ def load_config(config_dir: Path | str) -> Config:
         anomaly_targets=AnomalyTargetsConfig(**anomaly_data),
         freshness_targets=FreshnessTargetsConfig(**freshness_data),
         alert_policies=AlertPoliciesConfig(**alert_data),
+        pii_targets=PiiTargetsConfig(**pii_data),
     )
 
 
@@ -285,6 +295,7 @@ __all__ = [
     "FreshnessTargetsConfig",
     "InstallConfig",
     "LLMConfig",
+    "PiiTargetsConfig",
     "RecipientsConfig",
     "RetryPoliciesConfig",
     "RetryPolicyEntry",

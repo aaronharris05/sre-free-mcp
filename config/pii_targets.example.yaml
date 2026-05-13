@@ -1,0 +1,29 @@
+# PII-inspection targets.
+#
+# Each entry tells the daily PII sentinel to run Cloud DLP inspect
+# over one BigQuery table. Findings flow into governance.pii_findings;
+# high-severity ones (e.g. VERY_LIKELY EMAIL_ADDRESS) are also
+# mirrored into gap_reports so they fold into the weekly rollup.
+#
+# Customers list only tables that legitimately contain customer-
+# touching data; lower-environment / synthetic tables stay off the
+# list to avoid wasted DLP quota.
+
+targets:
+  - dataset: customers
+    table: users
+    sample_rows: 1000
+    info_types:
+      - EMAIL_ADDRESS
+      - PHONE_NUMBER
+      - US_SOCIAL_SECURITY_NUMBER
+      - CREDIT_CARD_NUMBER
+      - PERSON_NAME
+
+  - dataset: customers
+    table: payment_methods
+    sample_rows: 500
+    info_types:
+      - CREDIT_CARD_NUMBER
+      - IBAN_CODE
+    not_yet_built: true   # ships with the payments rollout

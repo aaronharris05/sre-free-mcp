@@ -97,6 +97,16 @@ variable "enabled_tasks" {
     incidents_tick         = "*/15 * * * *"
     rca_tick               = "*/30 * * * *"
     rollup                 = "0 13 * * 1"
+    # Slices 13-16. Disabled by default ("") — customer enables by
+    # populating the supporting config (PII targets, SCC org_id,
+    # GitHub token secret, dependency / coverage env vars).
+    dependency_audit    = ""
+    scm_audit           = ""
+    test_coverage_audit = ""
+    secret_iam_audit    = "0 7 * * *"
+    security_audit      = ""
+    pii_audit           = ""
+    llm_safety_audit    = ""
   }
 }
 

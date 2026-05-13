@@ -27,6 +27,9 @@ dependencies = [
     "google-cloud-bigquery>=3.25",
     "google-cloud-run>=0.10",
     "google-cloud-secret-manager>=2.20",
+    "google-cloud-resource-manager>=1.13",
+    "google-cloud-monitoring>=2.20",
+    "google-cloud-scheduler>=2.13",
     "pydantic>=2.7",
     "pyyaml>=6.0",
     "click>=8.1",
@@ -38,6 +41,10 @@ dependencies = [
 
 [project.optional-dependencies]
 gemini = ["google-genai>=0.5"]
+# Heavy-tail GCP audit deps — kept out of the default install so the
+# container stays small for users who only run the core audits.
+security = ["google-cloud-securitycenter>=1.30"]
+pii = ["google-cloud-dlp>=3.20"]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
