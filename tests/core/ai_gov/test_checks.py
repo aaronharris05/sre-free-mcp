@@ -13,7 +13,7 @@ def _wf(**overrides):
         "trigger_kind": "scheduler",
         "idempotent": True,
         "owner_team": "data_owners",
-        "business_purpose": "Reconciles daily customer counts against billing source.",
+        "business_purpose": "Reconciles daily active-user counts against authentication logs.",
         "source_path": "agents/demo.py",
         "status": "active",
     }
@@ -46,7 +46,7 @@ def test_too_short_business_purpose_fires_medium():
 
 def test_min_chars_threshold_is_tunable():
     """A 35-char purpose passes default 30 but not a stricter 50."""
-    long = "Reconciles billing every morning at 4am."  # 40 chars
+    long = "Reconciles user signups every morning at 4am."  # 40 chars
     assert evaluate(_wf(business_purpose=long)) == []
     findings = evaluate(_wf(business_purpose=long), business_purpose_min_chars=50)
     assert any(f.gap_kind == "business_purpose_too_terse" for f in findings)

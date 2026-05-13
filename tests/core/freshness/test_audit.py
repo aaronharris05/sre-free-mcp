@@ -18,7 +18,7 @@ _NOW = datetime(2026, 5, 12, 12, 0, tzinfo=UTC)
 def _t(
     *,
     dataset: str = "raw",
-    table: str = "weather_hourly",
+    table: str = "api_latency_hourly",
     cadence: float = 1.5,
     not_yet_built: bool = False,
 ) -> FreshnessTarget:
@@ -92,14 +92,14 @@ def test_sweep_with_missing_snapshot_does_not_crash(monkeypatch):
 def test_stale_table_finding_persisted_to_gap_reports(monkeypatch):
     snap = TableFreshness(
         dataset="raw",
-        table="weather_hourly",
+        table="api_latency_hourly",
         last_modified=_NOW - timedelta(hours=10),  # > 5x 1.5h cadence
         row_count=100,
         expected_cadence_hours=1.5,
         owner_team="data_owners",
         purpose="test",
     )
-    _patch_read(monkeypatch, {("raw", "weather_hourly"): snap})
+    _patch_read(monkeypatch, {("raw", "api_latency_hourly"): snap})
     bq = _FakeBQ()
     result = audit.sweep(
         project="p", bq_client=bq, targets=[_t()], now=_NOW
@@ -112,14 +112,14 @@ def test_stale_table_finding_persisted_to_gap_reports(monkeypatch):
 def test_write_false_returns_findings_without_persisting(monkeypatch):
     snap = TableFreshness(
         dataset="raw",
-        table="weather_hourly",
+        table="api_latency_hourly",
         last_modified=_NOW - timedelta(hours=10),
         row_count=100,
         expected_cadence_hours=1.5,
         owner_team="data_owners",
         purpose="",
     )
-    _patch_read(monkeypatch, {("raw", "weather_hourly"): snap})
+    _patch_read(monkeypatch, {("raw", "api_latency_hourly"): snap})
     bq = _FakeBQ()
     result = audit.sweep(
         project="p", bq_client=bq, targets=[_t()], now=_NOW, write=False
@@ -131,14 +131,14 @@ def test_write_false_returns_findings_without_persisting(monkeypatch):
 def test_sweep_uses_custom_dataset(monkeypatch):
     snap = TableFreshness(
         dataset="raw",
-        table="weather_hourly",
+        table="api_latency_hourly",
         last_modified=_NOW - timedelta(hours=10),
         row_count=100,
         expected_cadence_hours=1.5,
         owner_team="data_owners",
         purpose="",
     )
-    _patch_read(monkeypatch, {("raw", "weather_hourly"): snap})
+    _patch_read(monkeypatch, {("raw", "api_latency_hourly"): snap})
     bq = _FakeBQ()
     audit.sweep(
         project="p",
@@ -189,7 +189,7 @@ def test_read_snapshot_rejects_unsafe_dataset_identifier():
     bq = _FakeBQ()
     bad = FreshnessTarget(
         dataset="raw; DROP TABLE",  # SQL injection attempt
-        table="weather_hourly",
+        table="api_latency_hourly",
         expected_cadence_hours=1.5,
         owner_team="data_owners",
     )
@@ -201,7 +201,7 @@ def test_read_snapshot_rejects_unsafe_project_identifier():
     bq = _FakeBQ()
     target = FreshnessTarget(
         dataset="raw",
-        table="weather_hourly",
+        table="api_latency_hourly",
         expected_cadence_hours=1.5,
         owner_team="data_owners",
     )

@@ -14,8 +14,8 @@ from sre_free_mcp.core.anomaly.targets import (
 
 
 def _t(
-    table: str = "ex.weather",
-    metric: str = "temp_f",
+    table: str = "ex.api_latency",
+    metric: str = "latency_p95_ms",
     owner: str = "data_owners",
     not_yet_built: bool = False,
     severity_red_z: float = 5.0,
@@ -123,7 +123,7 @@ def test_active_targets_with_all_built_returns_full_list():
 
 def test_find_returns_matching_target():
     targets = [
-        _t(table="ex.weather", metric="temp_f", owner="data_owners"),
+        _t(table="ex.api_latency", metric="latency_p95_ms", owner="data_owners"),
         _t(table="ex.load", metric="mw", owner="trader_owners"),
     ]
     t = find(targets, "ex.load", "mw")

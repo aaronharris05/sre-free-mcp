@@ -17,7 +17,7 @@ class AnomalyTarget(BaseModel):
     """One anomaly-detection target.
 
     Attributes:
-        table: dataset-qualified table name, e.g. ``"raw.weather_hourly"``.
+        table: dataset-qualified table name, e.g. ``"raw.api_latency_hourly"``.
             The detector resolves the project at runtime.
         metric_column: numeric column to score for anomalies.
         timestamp_column: TIMESTAMP / DATE / DATETIME column used to

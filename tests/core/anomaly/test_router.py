@@ -22,7 +22,7 @@ def _t(table: str, metric: str, owner: str) -> AnomalyTarget:
 def test_each_target_routes_to_its_team():
     """The router must agree with the registry — no silent overrides."""
     targets = [
-        _t("ex.weather", "temp_f", "data_owners"),
+        _t("ex.api_latency", "latency_p95_ms", "data_owners"),
         _t("ex.load", "mw", "trader_owners"),
         _t("ex.ar_balance", "balance", "finance_owners"),
     ]
@@ -38,8 +38,8 @@ def test_unknown_table_falls_through_to_default_fallback():
 
 def test_known_table_unknown_metric_falls_through():
     """Routing keys on (table, metric_column), not just table."""
-    targets = [_t("ex.weather", "temp_f", "data_owners")]
-    assert owner_for(targets, "ex.weather", "not_a_metric") == "governance_owners"
+    targets = [_t("ex.api_latency", "latency_p95_ms", "data_owners")]
+    assert owner_for(targets, "ex.api_latency", "not_a_metric") == "governance_owners"
 
 
 def test_fallback_team_is_customizable():

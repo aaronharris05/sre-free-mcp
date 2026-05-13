@@ -249,8 +249,8 @@ def test_apply_retry_overrides_with_no_policies_is_noop():
 
 def _example_target(owner: str = "data_owners") -> AnomalyTarget:
     return AnomalyTarget(
-        table="ex.weather",
-        metric_column="temp_f",
+        table="ex.api_latency",
+        metric_column="latency_p95_ms",
         timestamp_column="ts",
         lookback_days=14,
         severity_red_z=5.0,
@@ -318,8 +318,8 @@ groups:
         tmp_path / "anomaly_targets.yaml",
         """
 targets:
-  - table: ex.weather
-    metric_column: temp_f
+  - table: ex.api_latency
+    metric_column: latency_p95_ms
     timestamp_column: ts
     lookback_days: 14
     severity_red_z: 5.0

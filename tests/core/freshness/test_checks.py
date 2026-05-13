@@ -12,7 +12,7 @@ _NOW = datetime(2026, 5, 12, 12, 0, tzinfo=UTC)
 def _snap(
     *,
     dataset: str = "raw",
-    table: str = "weather_hourly",
+    table: str = "api_latency_hourly",
     last_modified: datetime | None,
     row_count: int = 100,
     cadence: float = 1.5,
@@ -115,7 +115,7 @@ def test_findings_use_scope_freshness_and_fqn_scope_id():
     s = _snap(last_modified=_NOW - timedelta(hours=10))
     findings = evaluate(s, _NOW)
     assert all(f.scope == "freshness" for f in findings)
-    assert all(f.scope_id == "raw.weather_hourly" for f in findings)
+    assert all(f.scope_id == "raw.api_latency_hourly" for f in findings)
 
 
 def test_findings_carry_owner_team_in_details():

@@ -16,7 +16,7 @@ from sre_free_mcp.core.freshness.targets import (
 def _t(
     *,
     dataset: str = "raw",
-    table: str = "weather_hourly",
+    table: str = "api_latency_hourly",
     cadence: float = 1.5,
     owner: str = "data_owners",
     not_yet_built: bool = False,
@@ -53,8 +53,8 @@ def test_target_rejects_blank_dataset():
 
 
 def test_target_fqn_property():
-    t = _t(dataset="raw", table="weather_hourly")
-    assert t.fqn == "raw.weather_hourly"
+    t = _t(dataset="raw", table="api_latency_hourly")
+    assert t.fqn == "raw.api_latency_hourly"
 
 
 def test_targets_config_rejects_duplicate_table_pairs():

@@ -14,8 +14,8 @@ _NOW = datetime(2026, 5, 1, 4, 0, tzinfo=UTC)
 def _f(
     *,
     severity: str = "high",
-    table: str = "ex.weather",
-    metric: str = "temp_f",
+    table: str = "ex.api_latency",
+    metric: str = "latency_p95_ms",
     z: float = 6.5,
     value: float = 142.3,
     as_of: str = "2026-05-01T03:54:00+00:00",
@@ -115,10 +115,10 @@ class _RaisingLLM(LLMProvider):
 
 
 def test_llm_narrative_appears_in_text_body():
-    llm = _FakeLLM(response="The largest outlier landed at ex.weather.temp_f.")
+    llm = _FakeLLM(response="The largest outlier landed at ex.api_latency.latency_p95_ms.")
     text, html_body = build_bodies([_f()], _NOW, project="p", llm=llm)
-    assert "The largest outlier landed at ex.weather.temp_f." in text
-    assert "The largest outlier landed at ex.weather.temp_f." in html_body
+    assert "The largest outlier landed at ex.api_latency.latency_p95_ms." in text
+    assert "The largest outlier landed at ex.api_latency.latency_p95_ms." in html_body
     assert len(llm.calls) == 1
 
 

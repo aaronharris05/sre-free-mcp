@@ -11,16 +11,16 @@
 # audit skips them with a log line.
 
 targets:
-  # Hourly-refresh weather ingest.
+  # Hourly-refresh API metrics ingest.
   - dataset: raw
-    table: weather_hourly
+    table: api_latency_hourly
     expected_cadence_hours: 1.5      # 1h cadence + 30min slack
     owner_team: data_owners
-    purpose: NOAA weather hourly ingest
+    purpose: API latency metrics hourly ingest
 
-  # Daily customer-counts rollup.
+  # Daily active-users rollup.
   - dataset: curated
-    table: customer_counts_daily
+    table: active_users_daily
     expected_cadence_hours: 26       # daily + 2h slack
     owner_team: finance_owners
     purpose: Daily active-customers rollup

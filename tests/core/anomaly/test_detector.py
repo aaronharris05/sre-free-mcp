@@ -23,8 +23,8 @@ _NOW = datetime(2026, 5, 1, 4, 0, tzinfo=UTC)
 
 def _target(
     *,
-    table: str = "ex.weather",
-    metric: str = "temp_f",
+    table: str = "ex.api_latency",
+    metric: str = "latency_p95_ms",
     owner: str = "data_owners",
     red: float = 5.0,
     yellow: float = 3.5,
@@ -120,11 +120,11 @@ def test_thin_window_returns_no_findings(monkeypatch):
 
 def test_high_severity_flag(monkeypatch):
     """A row whose z-equivalent crosses red threshold gets severity=high."""
-    targets = [_target(table="ex.weather", red=5.0, yellow=3.5)]
+    targets = [_target(table="ex.api_latency", red=5.0, yellow=3.5)]
     # Build a window where the last row will become a large positive z.
     rows = [{"ts": f"2026-05-{i:02d}", "value": float(i)} for i in range(1, 30)]
     rows.append({"ts": "2026-05-30", "value": 1000.0})  # the obvious outlier
-    _patch_window(monkeypatch, {"ex.weather": rows})
+    _patch_window(monkeypatch, {"ex.api_latency": rows})
 
     # Stub engine: give the outlier (last index) a much bigger raw score.
     scores = [1.0] * (len(rows) - 1) + [50.0]
@@ -134,7 +134,7 @@ def test_high_severity_flag(monkeypatch):
     result = detector.sweep(project="p", bq_client=bq, targets=targets, now=_NOW)
     assert any(f.severity == "high" for f in result.findings)
     high = [f for f in result.findings if f.severity == "high"][0]
-    assert high.details["table"] == "ex.weather"
+    assert high.details["table"] == "ex.api_latency"
     assert high.details["owner_team"] == "data_owners"
     assert high.scope == "data"
     assert high.gap_kind == "anomaly_zscore"
@@ -144,7 +144,7 @@ def test_no_findings_when_all_z_below_yellow(monkeypatch):
     """If z-scores stay below yellow, no findings fire."""
     targets = [_target(red=10.0, yellow=8.0)]
     rows = [{"ts": f"2026-05-{i:02d}", "value": float(i)} for i in range(1, 31)]
-    _patch_window(monkeypatch, {"ex.weather": rows})
+    _patch_window(monkeypatch, {"ex.api_latency": rows})
     # Tight, normal-ish scores → max z-equivalent well below 8.
     _patch_engine(monkeypatch, scores=[float(i) for i in range(30)])
 
@@ -174,10 +174,10 @@ def test_rows_with_none_values_are_skipped(monkeypatch):
 
 
 def test_findings_are_written_to_gap_reports(monkeypatch):
-    targets = [_target(table="ex.weather", red=2.0, yellow=1.0)]
+    targets = [_target(table="ex.api_latency", red=2.0, yellow=1.0)]
     rows = [{"ts": f"2026-05-{i:02d}", "value": float(i)} for i in range(1, 31)]
     rows.append({"ts": "2026-05-31", "value": 1000.0})
-    _patch_window(monkeypatch, {"ex.weather": rows})
+    _patch_window(monkeypatch, {"ex.api_latency": rows})
     scores = [1.0] * 30 + [50.0]
     _patch_engine(monkeypatch, scores=scores)
 
@@ -191,16 +191,16 @@ def test_findings_are_written_to_gap_reports(monkeypatch):
     assert row["gap_kind"] == "anomaly_zscore"
     # details is JSON-stringified
     details = json.loads(row["details"])
-    assert details["table"] == "ex.weather"
+    assert details["table"] == "ex.api_latency"
     assert "z_score" in details
 
 
 def test_write_findings_false_returns_findings_without_inserting(monkeypatch):
     """Dry-run mode: compute findings but don't persist."""
-    targets = [_target(table="ex.weather", red=2.0, yellow=1.0)]
+    targets = [_target(table="ex.api_latency", red=2.0, yellow=1.0)]
     rows = [{"ts": f"2026-05-{i:02d}", "value": float(i)} for i in range(1, 31)]
     rows.append({"ts": "2026-05-31", "value": 1000.0})
-    _patch_window(monkeypatch, {"ex.weather": rows})
+    _patch_window(monkeypatch, {"ex.api_latency": rows})
     scores = [1.0] * 30 + [50.0]
     _patch_engine(monkeypatch, scores=scores)
 
@@ -220,7 +220,7 @@ def test_custom_governance_dataset_threads_into_findings_write(monkeypatch):
     targets = [_target(red=2.0, yellow=1.0)]
     rows = [{"ts": f"2026-05-{i:02d}", "value": float(i)} for i in range(1, 31)]
     rows.append({"ts": "2026-05-31", "value": 1000.0})
-    _patch_window(monkeypatch, {"ex.weather": rows})
+    _patch_window(monkeypatch, {"ex.api_latency": rows})
     _patch_engine(monkeypatch, scores=[1.0] * 30 + [50.0])
 
     bq = _FakeBQ()

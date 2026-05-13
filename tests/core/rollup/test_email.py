@@ -41,7 +41,7 @@ def _populated_summary() -> RollupSummary:
             {
                 "severity": "high",
                 "scope": "freshness",
-                "scope_id": "raw.weather_hourly",
+                "scope_id": "raw.api_latency_hourly",
                 "gap_kind": "table_stale",
             },
         ],
@@ -79,7 +79,7 @@ def test_text_body_lists_severity_and_scope_counts():
 def test_text_body_lists_top_findings():
     text, _ = build_bodies(_populated_summary(), project="p")
     assert "wf_a" in text
-    assert "raw.weather_hourly" in text
+    assert "raw.api_latency_hourly" in text
 
 
 def test_empty_summary_text_has_none_markers():

@@ -34,7 +34,7 @@ def _wf(**overrides):
         "trigger_kind": "scheduler",
         "idempotent": True,
         "owner_team": "data_owners",
-        "business_purpose": "Reconciles daily customer counts against billing source.",
+        "business_purpose": "Reconciles daily active-user counts against authentication logs.",
         "source_path": "agents/x.py",
         "status": "active",
     }
@@ -65,7 +65,7 @@ def test_sweep_threads_through_tunable_min_chars(monkeypatch):
     # Use a 35-char purpose so default passes, tight threshold fires.
     _patch_workflows(
         monkeypatch,
-        [_wf(business_purpose="Reconciles billing every morning at 4am.")],
+        [_wf(business_purpose="Reconciles user signups every morning at 4am.")],
     )
     result = audit.sweep(
         project="p", bq_client=bq, now=_NOW, business_purpose_min_chars=50

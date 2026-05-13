@@ -17,33 +17,33 @@ targets:
   # ─────────────────────────────────────────────────────────────────
   # Data-quality targets (route to data_owners)
   # ─────────────────────────────────────────────────────────────────
-  - table: example_dataset.weather_hourly
-    metric_column: temp_f
-    timestamp_column: obs_time_utc
+  - table: example_dataset.api_latency_hourly
+    metric_column: latency_p95_ms
+    timestamp_column: ts
     lookback_days: 14
     severity_red_z: 5.0
     severity_yellow_z: 3.5
     owner_team: data_owners
-    purpose: Weather temperature outlier (data quality)
+    purpose: API latency p95 outlier (data quality)
 
   # ─────────────────────────────────────────────────────────────────
   # Business signals (route to trader_owners / finance_owners)
   # ─────────────────────────────────────────────────────────────────
-  - table: example_dataset.system_load_hourly
+  - table: example_dataset.request_volume_hourly
     metric_column: mw
-    timestamp_column: interval_end_utc
+    timestamp_column: ts
     lookback_days: 30
     severity_red_z: 6.0
     severity_yellow_z: 4.0
     owner_team: trader_owners
-    purpose: System load outlier (business signal)
+    purpose: Request volume outlier (business signal)
 
-  - table: example_dataset.customer_counts_daily
-    metric_column: active_customers
-    timestamp_column: as_of_date
+  - table: example_dataset.active_users_daily
+    metric_column: active_users
+    timestamp_column: ts
     lookback_days: 60
     severity_red_z: 5.0
     severity_yellow_z: 3.0
     owner_team: finance_owners
-    purpose: Customer-count drift (business signal)
+    purpose: Active-user drift (business signal)
     not_yet_built: true   # table not provisioned yet; sweep will skip
